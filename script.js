@@ -31,6 +31,7 @@ let listArrays = [];
 // Drag Functionality
 let draggedItem;
 let currentColumn;
+let dragging = false;
 
 // Get Arrays from localStorage if available, set default values if not
 function getSavedColumns() {
@@ -63,6 +64,12 @@ function updateSavedColumns() {
   });
 }
 
+// Filter Arrays to remove empty values
+// function filterArray(array) {
+//   const filteredArray = array.filter(item => item !== null);
+//   return filterArray;
+// }
+
 // Create DOM Elements for each list item
 function createItemEl(columnEl, column, item, index) {
   //   console.log("columnEl:", columnEl);
@@ -75,6 +82,9 @@ function createItemEl(columnEl, column, item, index) {
   listEl.textContent = item;
   listEl.draggable = true;
   listEl.setAttribute("ondragstart", " drag(event)");
+  listEl.contentEditable = true;
+  listEl.id = index;
+  listEl.setAttribute("onfocusout", `updateItem(${index},${column})`);
   //Append
   columnEl.appendChild(listEl);
 }
@@ -90,25 +100,43 @@ function updateDOM() {
   backlogListArray.forEach((backlogItem, index) => {
     createItemEl(backlogListEl, 0, backlogItem, index);
   });
+  // backlogListArray = filterArray(backlogListArray);
   // Progress Column
   progressList.textContent = "";
   progressListArray.forEach((progressItem, index) => {
     createItemEl(progressListEl, 1, progressItem, index);
   });
+  // progressListArray = filterArray(progressListArray);
   // Complete Column
   completeList.textContent = "";
   completeListArray.forEach((completeItem, index) => {
     createItemEl(completeList, 2, completeItem, index);
   });
+  // completeListArray = filterArray(completeListArray);
   // On Hold Column
   onHoldList.textContent = "";
   onHoldListArray.forEach((onHoldItem, index) => {
     createItemEl(onHoldList, 3, onHoldItem, index);
   });
+  // onHoldListArray = filterArray(onHoldListArray);
   // Run getSavedColumns only once, Update Local Storage
   updatedOnLoad = true;
   updateSavedColumns();
 }
+// UpdateItem/Delete
+function updateItem(id, column) {
+  const selectedArray = listArrays[column];
+  const selectedColumnEl = listColumns[column].children;
+  console.log(selectedColumnEl[id].textContent);
+  if (!dragging) {
+    if (!selectedColumnEl[id].textContent) {
+      delete selectedArray[id];
+    } else selectedArray[id] = selectedColumnEl[id].textContent;
+    // console.log(selectedArray);
+    updateDOM();
+  }
+}
+
 // Add to column list, reset textbox
 function addToColumn(column) {
   const itemText = addItems[column].textContent;
@@ -159,7 +187,8 @@ function rebuildArrays() {
 // Drag function
 function drag(e) {
   draggedItem = e.target;
-  console.log(draggedItem);
+  dragging = true;
+  // console.log(draggedItem);
 }
 // When Item enters column
 function dragEnter(column) {
@@ -180,6 +209,7 @@ function drop(e) {
   //   Add item to column
   const parent = listColumns[currentColumn];
   parent.appendChild(draggedItem);
+  dragging = false;
   rebuildArrays();
 }
 
